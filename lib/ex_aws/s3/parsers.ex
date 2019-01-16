@@ -1,6 +1,7 @@
 if Code.ensure_loaded?(SweetXml) do
   defmodule ExAws.S3.Parsers do
     import SweetXml, only: [sigil_x: 2]
+    require Logger
 
     def parse_upload({:ok, resp = %{body: xml}}) do
       parsed_body = xml
@@ -78,10 +79,16 @@ if Code.ensure_loaded?(SweetXml) do
     def parse_initiate_multipart_upload(val), do: val
 
     def parse_upload_part_copy({:ok, resp = %{body: xml}}) do
-      parsed_body = xml
-      |> SweetXml.xpath(~x"//CopyPartResult",
-        eTag: ~x"./ETag/text()"s
-      )
+      parsed_body = try do
+        xml
+        |> SweetXml.xpath(~x"//CopyPartResult",
+          eTag: ~x"./ETag/text()"s
+          )
+      rescue
+        e ->
+          Logger.error(e)
+          raise e
+      end
 
       {:ok, %{resp | body: parsed_body}}
     end
