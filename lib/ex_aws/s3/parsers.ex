@@ -86,8 +86,9 @@ if Code.ensure_loaded?(SweetXml) do
           )
       rescue
         e ->
+          Logger.warn(xml)
           Logger.error(e)
-          raise e
+          raise(e)
       end
 
       {:ok, %{resp | body: parsed_body}}
