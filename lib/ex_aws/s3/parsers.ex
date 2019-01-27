@@ -79,19 +79,14 @@ if Code.ensure_loaded?(SweetXml) do
     def parse_initiate_multipart_upload(val), do: val
 
     def parse_upload_part_copy({:ok, resp = %{body: xml}}) do
-      parsed_body = try do
-        xml
-        |> SweetXml.xpath(~x"//CopyPartResult",
+      if not is_nil(SweetXml.xpath(xml, ~x"//Error")) do
+        {:http_error, 500, resp}
+      else
+        parsed_body = SweetXml.xpath(xml, ~x"//CopyPartResult",
           eTag: ~x"./ETag/text()"s
-          )
-      rescue
-        e ->
-          Logger.warn(xml)
-          Logger.error(e)
-          raise(e)
+        )
+        {:ok, %{resp | body: parsed_body}}
       end
-
-      {:ok, %{resp | body: parsed_body}}
     end
     def parse_complete_multipart_upload(val), do: val
 
